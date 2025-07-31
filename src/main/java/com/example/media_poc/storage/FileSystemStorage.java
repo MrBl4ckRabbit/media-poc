@@ -1,6 +1,7 @@
 package com.example.media_poc.storage;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
  */
 
 @Service
+@Profile("!s3")
 public class FileSystemStorage implements VideoStorage {
     /**
      * Корневая директория, в которой лежат видео-файлы.

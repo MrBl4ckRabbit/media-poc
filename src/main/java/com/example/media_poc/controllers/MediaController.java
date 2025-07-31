@@ -1,6 +1,6 @@
-package com.example.media_poc.media;
+package com.example.media_poc.controllers;
 
-import com.example.media_poc.storage.VideoStorage;
+import com.example.media_poc.storage.CachedMediaService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,22 +23,17 @@ import java.util.List;
 @RequestMapping("/media")
 public class MediaController {
 
-    private final VideoStorage storage;
+    private final CachedMediaService cachedMediaService;
 
-    public MediaController(VideoStorage storage) {
-        this.storage = storage;
+    public MediaController(CachedMediaService cachedMediaService) {
+        this.cachedMediaService = cachedMediaService;
     }
 
-    /**
-     * Возвращает список всех ключей (имён файлов) в хранилище.
-     *
-     * Клиент может использовать этот список для построения URL к RangeController
-     * или TokenController.
-     *
-     * @return список строк — имена видео-файлов
-     */
     @GetMapping
     public List<String> listAll() {
-        return storage.listKeys();
+        return cachedMediaService.getCachedKeys().stream()
+                .filter(k -> k.startsWith("videos/"))
+                .map(k -> k.substring("videos/".length()))
+                .toList();
     }
 }

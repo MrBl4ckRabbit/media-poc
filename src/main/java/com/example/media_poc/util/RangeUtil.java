@@ -24,6 +24,15 @@ public class RangeUtil {
         public long end;
         public long total;
 
+        public Range() {
+        }
+
+        public Range(long start, long end, long total) {
+            this.start = start;
+            this.end = end;
+            this.total = total;
+        }
+
         /**
          * @return фактическое количество байт в диапазоне (end-start+1)
          */

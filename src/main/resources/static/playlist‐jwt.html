@@ -2,37 +2,58 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Плейлист через JWT + Range</title>
+    <title>JWT-плейлист</title>
 </head>
 <body>
 <h1>JWT-плейлист</h1>
-<video id="player" width="640" controls autoplay muted></video>
+
+<video id="player" width="640" controls autoplay muted>
+    <source id="videoSource" src="" type="video/mp4">
+    Ваш браузер не поддерживает video-tag.
+</video>
 
 <script>
-    const player = document.getElementById("player");
+    const player = document.getElementById('player');
+    const source = document.getElementById('videoSource');
 
-    fetch("/media")
+    // Заведём переменные, чтобы они были видны во всех then()
+    let keys, tokenMap, tokenUrls, idx = 0;
+
+    // 1. Получаем список имен видео
+    fetch('/media')
         .then(r => r.json())
-        .then(async list => {
-            const tokenUrls = await Promise.all(
-                list.map(async name => {
-                    const resp = await fetch(`/token/media/${name}/token`);
-                    const { token } = await resp.json();
-                    return `/token/media/signed/${token}`;
-                })
-            );
+        .then(k => {
+            keys = k;
 
-            let idx = 0;
+            // 2. Просим batch-токены
+            return fetch('/token/media/batch-tokens', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(keys)
+            });
+        })
+        .then(r => r.json())
+        .then(map => {
+            tokenMap  = map;
+
+            // 3. Строим URL-ы вида /token/media/signed/{token}
+            tokenUrls = keys.map(key => `/token/media/signed/${tokenMap[key]}`);
+
+            // 4. Функция воспроизведения
             function play(i) {
-                player.src = tokenUrls[i];
-                player.play().catch(()=>{});
+                source.src = tokenUrls[i];
+                player.load();       // обновляем <source> и "перезагружаем" плеер
+                player.play()        // и сразу play()
+                    .catch(console.error);
             }
 
-            player.addEventListener("ended", () => {
+            // При окончании текущего фрагмента переходим к следующему
+            player.addEventListener('ended', () => {
                 idx = (idx + 1) % tokenUrls.length;
                 play(idx);
             });
 
+            // Стартуем сразу с первого
             play(idx);
         })
         .catch(console.error);
